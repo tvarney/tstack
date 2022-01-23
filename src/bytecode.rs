@@ -161,12 +161,12 @@ pub mod sys {
 ///| CONST_32   |`0x07`|       |`[] -> [32]`                         | Push constant `32`
 ///| CONST_64   |`0x08`|       |`[] -> [64]`                         | Push constant `64`
 ///| CONST_128  |`0x09`|       |`[] -> [128]`                        | Push constant `128`
-///| CONST_N1   |`0x09`|       |`[] -> [-1]`                         | Push constant `-1`
-///| CONST_U16  |`0x0A`|`c:u16`|`[] -> [c]`                          | Push zero-extended 16-bit constant `$c`
-///| CONST_U32  |`0x0B`|`c:u32`|`[] -> [c]`                          | Push zero-extended 32-bit constant `$c`; used for non-widened f32 as well
-///| CONST_U64  |`0x0C`|`c:u64`|`[] -> [c]`                          | Push 64-bit constant `$c`; used for f64 and i64 as well
-///| CONST_I16  |`0x0D`|`c:i16`|`[] -> [c]`                          | Push sign-extended 16-bit constant `$c`
-///| CONST_I32  |`0x0E`|`c:i32`|`[] -> [c]`                          | Push sign-extended 32-bit constant `$c`
+///| CONST_N1   |`0x0A`|       |`[] -> [-1]`                         | Push constant `-1`
+///| CONST_U16  |`0x0B`|`c:u16`|`[] -> [c]`                          | Push zero-extended 16-bit constant `$c`
+///| CONST_U32  |`0x0C`|`c:u32`|`[] -> [c]`                          | Push zero-extended 32-bit constant `$c`; used for non-widened f32 as well
+///| CONST_U64  |`0x0D`|`c:u64`|`[] -> [c]`                          | Push 64-bit constant `$c`; used for f64 and i64 as well
+///| CONST_I16  |`0x0E`|`c:i16`|`[] -> [c]`                          | Push sign-extended 16-bit constant `$c`
+///| CONST_I32  |`0x0F`|`c:i32`|`[] -> [c]`                          | Push sign-extended 32-bit constant `$c`
 ///| DUPE       |`0x10`|       |`[a1...a$n,n] -> [a1...a$n,a1...a$n]`| Duplicate the topmost `$n` stack elements
 ///| DUPE_1     |`0x11`|       |`[a]          -> [a,a]`              | Duplicate the topmost stack element
 ///| DUPE_C     |`0x12`|`c:u16`|`[a1...a$c]   -> [a1...a$c,a1...a$c]`| Duplicate the topmost `$c` stack elements
@@ -239,13 +239,13 @@ pub mod stack {
     pub const CONST_16:   u8 = 0x06;
     pub const CONST_32:   u8 = 0x07;
     pub const CONST_64:   u8 = 0x08;
-    pub const CONST_N1:   u8 = 0x09;
-    pub const CONST_U16:  u8 = 0x0A;
-    pub const CONST_U32:  u8 = 0x0B;
-    pub const CONST_U64:  u8 = 0x0C;
-    pub const CONST_I16:  u8 = 0x0D;
-    pub const CONST_I32:  u8 = 0x0E;
-    pub const CONST_F32:  u8 = 0x0F;
+    pub const CONST_128:  u8 = 0x09;
+    pub const CONST_N1:   u8 = 0x0A;
+    pub const CONST_U16:  u8 = 0x0B;
+    pub const CONST_U32:  u8 = 0x0C;
+    pub const CONST_U64:  u8 = 0x0D;
+    pub const CONST_I16:  u8 = 0x0E;
+    pub const CONST_I32:  u8 = 0x0F;
 
     pub const DUPE_1:     u8 = 0x10;
     pub const DUPE_C:     u8 = 0x11;
