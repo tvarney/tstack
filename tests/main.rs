@@ -12,7 +12,7 @@ fn test_stack(bytecode: &[u16], expected: Vec<u64>) {
     let mut engine = tstack::Engine::new();
     let result = engine.run(bytecode);
     if let Err(e) = result {
-        assert!(true, "Unexpected error: {}", e);
+        assert!(false, "Unexpected error: {}", e);
     }
     assert_eq!(engine.stack, expected);
 }
@@ -20,6 +20,20 @@ fn test_stack(bytecode: &[u16], expected: Vec<u64>) {
 #[test]
 fn test_const_0() {
     test_stack(&[tstack::inst_stack!(CONST_0)], stack![0]);
+}
+
+#[test]
+fn test_const_0_stack_overflow() {
+    let mut engine = tstack::Engine::new();
+    engine.maxstack = 2;
+    let result = engine.run(&[
+        tstack::inst_stack!(CONST_0),
+        tstack::inst_stack!(CONST_0),
+        tstack::inst_stack!(CONST_0),
+    ]);
+    if let Ok(()) = result {
+        assert!(false, "code must overflow stack");
+    }
 }
 
 #[test]

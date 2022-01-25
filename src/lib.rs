@@ -7,8 +7,34 @@ use std::num::Wrapping;
 
 /// The virtual machine engine
 pub struct Engine {
-    // The operand stack, used to hold dynamic arguments to instructions
+    /// The operand stack, used to hold dynamic arguments to instructions
     pub stack: Vec<u64>,
+
+    /// The maximum depth of the stack
+    pub maxstack: usize,
+}
+
+macro_rules! checkstack {
+    ($engine:expr, $opcode:expr, $name:literal, $count:expr) => {
+        if $engine.maxstack - $engine.stack.len() < $count {
+            return Err(BytecodeError::stack_overflow($opcode, $name));
+        }
+    }
+}
+
+macro_rules! pushstack {
+    ($engine:expr, $opcode:expr, $name:literal, $value:expr) => {
+        pushstack!(@n $engine, $opcode, $name, 1, $value)
+    };
+    ($engine:expr, $opcode:expr, $name:literal, $v1:expr, $v2:expr) => {
+        pushstack!(@n $engine, $opcode, $name, 2, $v1, $v2)
+    };
+    (@n $engine:expr, $opcode:expr, $name:literal, $count:literal, $($value:expr),*) => {{
+        checkstack!($engine, $opcode, $name, $count);
+        $(
+            $engine.stack.push($value as u64);
+        )*
+    }}
 }
 
 macro_rules! popsingle {
@@ -85,6 +111,7 @@ impl Engine {
     pub fn new() -> Engine {
         Engine {
             stack: Vec::new(),
+            maxstack: 0x8FFF,
         }
     }
 
@@ -144,35 +171,36 @@ impl Engine {
 
     fn op_stack(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError> {
         match value {
-            bytecode::stack::CONST_0 => self.stack.push(0),
-            bytecode::stack::CONST_1 => self.stack.push(1),
-            bytecode::stack::CONST_2 => self.stack.push(2),
-            bytecode::stack::CONST_3 => self.stack.push(3),
-            bytecode::stack::CONST_4 => self.stack.push(4),
-            bytecode::stack::CONST_8 => self.stack.push(8),
-            bytecode::stack::CONST_16 => self.stack.push(16),
-            bytecode::stack::CONST_32 => self.stack.push(32),
-            bytecode::stack::CONST_64 => self.stack.push(64),
-            bytecode::stack::CONST_128 => self.stack.push(128),
-            bytecode::stack::CONST_N1 => self.stack.push((-1 as i64) as u64),
+            //bytecode::stack::CONST_0 => self.stack.push(0),
+            bytecode::stack::CONST_0 => pushstack!(self, code[n], "const.0", 0),
+            bytecode::stack::CONST_1 => pushstack!(self, code[n], "const.1", 1),
+            bytecode::stack::CONST_2 => pushstack!(self, code[n], "const.2", 2),
+            bytecode::stack::CONST_3 => pushstack!(self, code[n], "const.3", 3),
+            bytecode::stack::CONST_4 => pushstack!(self, code[n], "const.4", 4),
+            bytecode::stack::CONST_8 => pushstack!(self, code[n], "const.8", 8),
+            bytecode::stack::CONST_16 => pushstack!(self, code[n], "const.16", 16),
+            bytecode::stack::CONST_32 => pushstack!(self, code[n], "const.32", 32),
+            bytecode::stack::CONST_64 => pushstack!(self, code[n], "const.64", 64),
+            bytecode::stack::CONST_128 => pushstack!(self, code[n], "const.128", 128),
+            bytecode::stack::CONST_N1 => pushstack!(self, code[n], "const.n1", (-1 as i64)),
             bytecode::stack::CONST_U16 => {
-                self.stack.push(cval_u16!(code, n, "const.u16") as u64);
+                pushstack!(self, code[n], "const.u16", cval_u16!(code, n, "const.u16"));
                 return Ok(n+2);
             },
             bytecode::stack::CONST_U32 => {
-                self.stack.push(cval_u32!(code, n, "const.u32") as u64);
+                pushstack!(self, code[n], "const.u32", cval_u32!(code, n, "const.u32"));
                 return Ok(n+3);
             },
             bytecode::stack::CONST_U64 => {
-                self.stack.push(cval_u64!(code, n, "const.u64"));
+                pushstack!(self, code[n], "const.u64", cval_u64!(code, n, "const.u64"));
                 return Ok(n + 5);
             },
             bytecode::stack::CONST_I16 => {
-                self.stack.push(((cval_u16!(code, n, "const.i16") as i16) as i64) as u64);
+                pushstack!(self, code[n], "const.i16", ((cval_u16!(code, n, "const.i16") as i16) as i64));
                 return Ok(n+2);
             },
             bytecode::stack::CONST_I32 => {
-                self.stack.push(((cval_u32!(code, n, "const.i32") as i32) as i64) as u64);
+                pushstack!(self, code[n], "const.i32", ((cval_u32!(code, n, "const.i32") as i32) as i64));
                 return Ok(n+3);
             },
             _ => {

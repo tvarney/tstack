@@ -33,6 +33,7 @@ pub struct RequiredValues {
 /// planned to add a signals like interface for registering fault handlers.
 #[derive(Debug, Clone)]
 pub enum BytecodeError {
+    StackOverflow(Instruction),
     StackUnderflow(RequiredValues),
     CodeData(RequiredValues),
     BadOpCode(u16),
@@ -41,6 +42,9 @@ pub enum BytecodeError {
 impl std::fmt::Display for BytecodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            BytecodeError::StackOverflow(i) => {
+                write!(f, "stack size exceeded maximum allowed on opcode {}", i)
+            },
             BytecodeError::StackUnderflow(r) => {
                 write!(f, "too few operands for {}; {} values required", r.instruction, r.required)
             },
@@ -55,6 +59,13 @@ impl std::fmt::Display for BytecodeError {
 }
 
 impl BytecodeError {
+    pub fn stack_overflow(opcode: u16, name: &'static str) -> BytecodeError {
+        BytecodeError::StackOverflow(Instruction{
+            code: opcode,
+            name: name,
+        })
+    }
+
     pub fn stack_underflow(opcode: u16, name: &'static str, req: u64) -> BytecodeError {
         BytecodeError::StackUnderflow(RequiredValues{
             instruction: Instruction {
