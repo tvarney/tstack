@@ -174,8 +174,8 @@ pub mod sys {
 ///| SWAP_1     |`0x14`|       |`[a,b]        -> [b,a]`              | Swap the two topmost stack elements
 ///| SWAP_C     |`0x15`|`c:u16`|`[a1...a$c]   -> [a$c...a1]`         | Reverse the topmost `$c` stack elements
 ///| ROTATE     |`0x16`|       |`[a1...a$n,n,p] -> [a$p...a$n,a1...a$p-1]`| Rotate the topmost `$p` stack elements back `$n` places
-///| ROTATE_C   |`0x17`|`c:u16`|`[a1...a$c,p] -> [a$p...a$c,a1...a$p-1]`| Rotate the topmost `$p` stack elements back `$c` places
-///| ROTATE_1   |`0x18`|       |`[a1...a$n,n] -> [a$n,a1...a$n-1]`   | Rotate the topmost element back `$n` places
+///| ROTATE_1   |`0x17`|       |`[a1...a$n,n] -> [a$n,a1...a$n-1]`   | Rotate the topmost element back `$n` places
+///| ROTATE_C   |`0x18`|`c:u16`|`[a1...a$c,p] -> [a$p...a$c,a1...a$p-1]`| Rotate the topmost `$p` stack elements back `$c` places
 ///| ROTATE_1_C |`0x19`|`c:u16`|`[a1...a$c]   -> [a$c,a1...a$c-1]`   | Rotate the topmost element back `$c` places
 ///| POP        |`0x1A`|       |`[a1...a$n,n] -> []`                 | Remove the topmost `$n` elements from the stack
 ///| POP_1      |`0x1B`|       |`[a]          -> []`                 | Remove the topmost element from the stack
@@ -246,16 +246,15 @@ pub mod stack {
     pub const CONST_U64:  u8 = 0x0D;
     pub const CONST_I16:  u8 = 0x0E;
     pub const CONST_I32:  u8 = 0x0F;
-
-    pub const DUPE_1:     u8 = 0x10;
-    pub const DUPE_C:     u8 = 0x11;
-    pub const DUPE_N:     u8 = 0x12;
-    pub const SWAP_1:     u8 = 0x13;
-    pub const SWAP_C:     u8 = 0x14;
-    pub const SWAP_N:     u8 = 0x15;
+    pub const DUPE:       u8 = 0x10;
+    pub const DUPE_1:     u8 = 0x11;
+    pub const DUPE_C:     u8 = 0x12;
+    pub const SWAP:       u8 = 0x13;
+    pub const SWAP_1:     u8 = 0x14;
+    pub const SWAP_C:     u8 = 0x15;
     pub const ROTATE:     u8 = 0x16;
-    pub const ROTATE_C:   u8 = 0x17;
-    pub const ROTATE_1:   u8 = 0x18;
+    pub const ROTATE_1:   u8 = 0x17;
+    pub const ROTATE_C:   u8 = 0x18;
     pub const ROTATE_1_C: u8 = 0x19;
     pub const POP:        u8 = 0x1A;
     pub const POP_1:      u8 = 0x1B;

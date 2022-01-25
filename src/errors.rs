@@ -36,7 +36,7 @@ pub enum BytecodeError {
     StackOverflow(Instruction),
     StackUnderflow(RequiredValues),
     CodeData(RequiredValues),
-    BadOpCode(u16),
+    BadOpcode(u16),
 }
 
 impl std::fmt::Display for BytecodeError {
@@ -51,7 +51,7 @@ impl std::fmt::Display for BytecodeError {
             BytecodeError::CodeData(r) => {
                 write!(f, "insufficient data bytes for {}; {} bytes required", r.instruction, r.required)
             },
-            BytecodeError::BadOpCode(v) => {
+            BytecodeError::BadOpcode(v) => {
                 write!(f, "invalid opcode {:#06x}", v)
             }
         }
@@ -84,5 +84,33 @@ impl BytecodeError {
             },
             required: req,
         })
+    }
+
+    pub fn is_stack_overflow(&self) -> bool {
+        if let BytecodeError::StackOverflow(_) = self {
+            return true;
+        }
+        false
+    }
+
+    pub fn is_stack_underflow(&self) -> bool {
+        if let BytecodeError::StackUnderflow(_) = self {
+            return true;
+        }
+        false
+    }
+
+    pub fn is_code_data(&self) -> bool {
+        if let BytecodeError::CodeData(_) = self {
+            return true;
+        }
+        false
+    }
+
+    pub fn is_bad_opcode(&self) -> bool {
+        if let BytecodeError::BadOpcode(_) = self {
+            return true;
+        }
+        false
     }
 }

@@ -35,14 +35,14 @@ impl Engine {
             let opcode = code[n];
             let group = ((opcode & bytecode::GROUP_MASK) >> bytecode::GROUP_SHIFT) as u8;
             let value = ((opcode & bytecode::DATA_MASK) >> bytecode::DATA_SHIFT) as u8;
-            println!("OpCode: {:#06x} ({:#04x}|{:#04x})", opcode, group, value);
+            println!("Opcode: {:#06x} ({:#04x}|{:#04x})", opcode, group, value);
             match group {
                 bytecode::groups::SYSTEM => n = self.op_system(n, code, value)?,
                 bytecode::groups::STACK  => n = self.op_stack(n, code, value)?,
                 bytecode::groups::MATH   => n = self.op_math(n, code, value)?,
                 _ => {
                     // Unimplemented
-                    return Err(BytecodeError::BadOpCode(opcode));
+                    return Err(BytecodeError::BadOpcode(opcode));
                 }
             }
         }
@@ -74,7 +74,7 @@ impl Engine {
             },
             _ => {
                 // Unimplemented
-                return Err(BytecodeError::BadOpCode(code[n]));
+                return Err(BytecodeError::BadOpcode(code[n]));
             }
         }
         Ok(n+1)
@@ -114,8 +114,40 @@ impl Engine {
                 pushstack!(self, code[n], "const.i32", ((cval_u32!(code, n, "const.i32") as i32) as i64));
                 return Ok(n+3);
             },
+            bytecode::stack::DUPE => {
+                let num = popstack1!(self, code[n], "dupe");
+                checkstack!(self, code[n], "dupe", num);
+                if (self.stack.len() as u64) < num {
+                    return Err(BytecodeError::stack_underflow(code[n], "dupe", num));
+                }
+                // We can be 100% certain num fits within usize due to the above
+                // checks
+                let base = self.stack.len() - (num as usize);
+                for i in 0..(num as usize) {
+                    self.stack.push(self.stack[base+i]);
+                }
+            },
+            bytecode::stack::DUPE_1 => {
+                checkstack!(self, code[n], "dupe.1", 1);
+                if self.stack.len() < 1 {
+                    return Err(BytecodeError::stack_underflow(code[n], "dupe.1", 1));
+                }
+                self.stack.push(self.stack[self.stack.len()-1]);
+            },
+            bytecode::stack::DUPE_C => {
+                let num = cval_u16!(code, n, "dupe.c") as usize;
+                checkstack!(self, code[n], "dupe.c", num as u64);
+                if self.stack.len() < num {
+                    return Err(BytecodeError::stack_underflow(code[n], "dupe.c", num as u64))
+                }
+                let base = self.stack.len() - num;
+                for i in 0..num {
+                    self.stack.push(self.stack[base+i]);
+                }
+                return Ok(n+2);
+            },
             _ => {
-                return Err(BytecodeError::BadOpCode(code[n]));
+                return Err(BytecodeError::BadOpcode(code[n]));
             }
         }
         Ok(n + 1)
@@ -164,7 +196,7 @@ impl Engine {
                 return Ok(n+2);
             }
             _ => {
-                return Err(BytecodeError::BadOpCode(code[n]));
+                return Err(BytecodeError::BadOpcode(code[n]));
             }
         }
         Ok(n + 1)

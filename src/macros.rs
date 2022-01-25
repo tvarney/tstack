@@ -1,7 +1,7 @@
 
 macro_rules! checkstack {
     ($engine:expr, $opcode:expr, $name:literal, $count:expr) => {
-        if $engine.maxstack - $engine.stack.len() < $count {
+        if (($engine.maxstack - $engine.stack.len()) as u64) < $count {
             return Err(BytecodeError::stack_overflow($opcode, $name));
         }
     }
@@ -52,7 +52,7 @@ macro_rules! popstack2 {
 
 macro_rules! cval_u16 {
     ($code:expr, $n:expr, $name:literal) => {{
-        if $code.len() - $n < 1 {
+        if $code.len() - $n <= 1 {
             return Err(BytecodeError::code_data($code[$n], $name, 2));
         }
         $code[$n+1]
@@ -61,7 +61,7 @@ macro_rules! cval_u16 {
 
 macro_rules! cval_u16_2 {
     ($code:expr, $n:expr, $name:literal) => {{
-        if $code.len() - $n < 2 {
+        if $code.len() - $n <= 2 {
             return Err(BytecodeError::code_data($code[$n], $name, 4));
         }
         ($code[$n+1], $code[$n+2])
@@ -70,7 +70,7 @@ macro_rules! cval_u16_2 {
 
 macro_rules! cval_u16_4 {
     ($code:expr, $n:expr, $name:literal) => {{
-        if $code.len() - $n < 4 {
+        if $code.len() - $n <= 4 {
             return Err(BytecodeError::code_data($code[$n], $name, 8));
         }
         ($code[$n+1], $code[$n+2], $code[$n+3], $code[$n+4])
