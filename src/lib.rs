@@ -2,7 +2,7 @@
 pub mod bytecode;
 pub mod errors;
 
-use errors::{BytecodeError, StackError, ValueError};
+use errors::BytecodeError;
 use std::num::Wrapping;
 
 /// The virtual machine engine
@@ -17,9 +17,7 @@ macro_rules! popsingle {
         let res = $engine.stack.pop();
         match res {
             None => {
-                return Err(BytecodeError::StackError(StackError::new(
-                    $opcode, $name, $count,
-                )))
+                return Err(BytecodeError::stack_underflow($opcode, $name, $count));
             }
             Some(v) => value = v,
         }
@@ -44,7 +42,7 @@ macro_rules! popstack2 {
 macro_rules! cval_u16 {
     ($code:expr, $n:expr, $name:literal) => {{
         if $code.len() - $n < 1 {
-            return Err(BytecodeError::ValueError(ValueError::new($code[$n], $name, 2)));
+            return Err(BytecodeError::code_data($code[$n], $name, 2));
         }
         $code[$n+1]
     }}
@@ -53,7 +51,7 @@ macro_rules! cval_u16 {
 macro_rules! cval_u16_2 {
     ($code:expr, $n:expr, $name:literal) => {{
         if $code.len() - $n < 2 {
-            return Err(BytecodeError::ValueError(ValueError::new($code[$n], $name, 4)));
+            return Err(BytecodeError::code_data($code[$n], $name, 4));
         }
         ($code[$n+1], $code[$n+2])
     }}
@@ -62,7 +60,7 @@ macro_rules! cval_u16_2 {
 macro_rules! cval_u16_4 {
     ($code:expr, $n:expr, $name:literal) => {{
         if $code.len() - $n < 4 {
-            return Err(BytecodeError::ValueError(ValueError::new($code[$n], $name, 8)));
+            return Err(BytecodeError::code_data($code[$n], $name, 8));
         }
         ($code[$n+1], $code[$n+2], $code[$n+3], $code[$n+4])
     }}
@@ -106,7 +104,7 @@ impl Engine {
                 bytecode::groups::MATH   => n = self.op_math(n, code, value)?,
                 _ => {
                     // Unimplemented
-                    return Err(BytecodeError::BadOpCodeError(opcode));
+                    return Err(BytecodeError::BadOpCode(opcode));
                 }
             }
         }
@@ -138,7 +136,7 @@ impl Engine {
             },
             _ => {
                 // Unimplemented
-                return Err(BytecodeError::BadOpCodeError(code[n]));
+                return Err(BytecodeError::BadOpCode(code[n]));
             }
         }
         Ok(n+1)
@@ -170,26 +168,15 @@ impl Engine {
                 return Ok(n + 5);
             },
             bytecode::stack::CONST_I16 => {
-                if code.len() - n < 1 {
-                    return Err(BytecodeError::ValueError(ValueError::new(
-                        code[n], "const.i16", 2,
-                    )));
-                }
-                self.stack.push(((code[n+1] as i16) as i64) as u64);
+                self.stack.push(((cval_u16!(code, n, "const.i16") as i16) as i64) as u64);
                 return Ok(n+2);
             },
             bytecode::stack::CONST_I32 => {
-                if code.len() - n < 2 {
-                    return Err(BytecodeError::ValueError(ValueError::new(
-                        code[n], "const.i32", 4,
-                    )))
-                }
-                let value = (((((code[n + 1] as u32) << 16) | (code[n + 2] as u32)) as i32) as i64) as u64;
-                self.stack.push(value);
+                self.stack.push(((cval_u32!(code, n, "const.i32") as i32) as i64) as u64);
                 return Ok(n+3);
             },
             _ => {
-                return Err(BytecodeError::BadOpCodeError(code[n]));
+                return Err(BytecodeError::BadOpCode(code[n]));
             }
         }
         Ok(n + 1)
@@ -238,7 +225,7 @@ impl Engine {
                 return Ok(n+2);
             }
             _ => {
-                return Err(BytecodeError::BadOpCodeError(code[n]));
+                return Err(BytecodeError::BadOpCode(code[n]));
             }
         }
         Ok(n + 1)

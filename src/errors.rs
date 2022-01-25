@@ -1,81 +1,77 @@
 //! Definitions of error types the engine can return
 
-/// StackError is an error indicating that a stack pop operation failed
-///
-/// This error type is indicative of a compilation failure, as it is the result
-/// of the bytecode not pushing enough values onto the stack.
+/// Information about the faulting instruction
 #[derive(Debug, Clone)]
-pub struct StackError {
-    opcode: u16,
-    opname: &'static str,
-    reqvalues: u32,
+pub struct Instruction {
+    code: u16,
+    name: &'static str,
 }
 
-impl std::fmt::Display for StackError {
+impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "too few values in stack for {} ({:#06x}); {} values required",
-            self.opname, self.opcode, self.reqvalues
-        )
+        write!(f, "{} ({:#06x})", self.name, self.code)
     }
 }
 
-impl StackError {
-    /// Create a new StackError for the given opcode and number of required
-    /// values
-    pub fn new(opcode: u16, name: &'static str, reqvals: u32) -> StackError {
-        StackError {
-            opcode: opcode,
-            opname: name,
-            reqvalues: reqvals,
-        }
-    }
+/// Information about a number of required values
+#[derive(Debug, Clone)]
+pub struct RequiredValues {
+    instruction: Instruction,
+    required: u64,
 }
 
-/// ValueError is an error indicating that a load operation failed due to
-/// insufficient remaining bytes in the bytecode
-pub struct ValueError {
-    opcode: u16,
-    opname: &'static str,
-    reqbytes: u32,
-}
-
-impl std::fmt::Display for ValueError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "unexpected end of code while parsing value for {} ({:#06x}); {} words required",
-            self.opname, self.opcode, self.reqbytes
-        )
-    }
-}
-
-impl ValueError {
-    /// Creates a new ValueError
-    pub fn new(opcode: u16, name: &'static str, reqbytes: u32) -> ValueError {
-        ValueError {
-            opcode: opcode,
-            opname: name,
-            reqbytes: reqbytes,
-        }
-    }
-}
-
-/// BytecodeError is the generic error type returned by the run() function of
-/// the engine
+/// Instruction fault error type
+///
+/// This is the error type for instruction faults when the engine is running.
+/// Instruction faults indicate that an instruction level error occurred during
+/// the execution of the bytecode; these faults may indicate that the bytecode
+/// is malformed in some way, or that a logic error was made when constructing
+/// the bytecode. Additionally, memory issues (out of memory, stack overflows,
+/// etc) are handled by faults as well.
+///
+/// Currently there is no way for running code to handle faults, though it is
+/// planned to add a signals like interface for registering fault handlers.
+#[derive(Debug, Clone)]
 pub enum BytecodeError {
-    StackError(StackError),
-    ValueError(ValueError),
-    BadOpCodeError(u16),
+    StackUnderflow(RequiredValues),
+    CodeData(RequiredValues),
+    BadOpCode(u16),
 }
 
 impl std::fmt::Display for BytecodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            BytecodeError::StackError(e) => write!(f, "{}", e),
-            BytecodeError::ValueError(e) => write!(f, "{}", e),
-            BytecodeError::BadOpCodeError(v) => write!(f, "invalid opcode {:#06x}", v),
+            BytecodeError::StackUnderflow(r) => {
+                write!(f, "too few operands for {}; {} values required", r.instruction, r.required)
+            },
+            BytecodeError::CodeData(r) => {
+                write!(f, "insufficient data bytes for {}; {} bytes required", r.instruction, r.required)
+            },
+            BytecodeError::BadOpCode(v) => {
+                write!(f, "invalid opcode {:#06x}", v)
+            }
         }
+    }
+}
+
+impl BytecodeError {
+    pub fn stack_underflow(opcode: u16, name: &'static str, req: u64) -> BytecodeError {
+        BytecodeError::StackUnderflow(RequiredValues{
+            instruction: Instruction {
+                code: opcode,
+                name: name,
+            },
+            required: req,
+        })
+    }
+
+    pub fn code_data(opcode: u16, name: &'static str, req: u64) -> BytecodeError {
+        BytecodeError::CodeData(RequiredValues{
+            instruction: Instruction {
+                code: opcode,
+                name: name,
+            },
+            required: req,
+        })
     }
 }
