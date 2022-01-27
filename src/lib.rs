@@ -17,7 +17,7 @@ pub struct Engine {
     pub maxstack: usize,
 }
 
-impl Engine {
+impl<'a> Engine {
     /// Create a new Engine instance
     pub fn new() -> Engine {
         Engine {
@@ -27,7 +27,7 @@ impl Engine {
     }
 
     /// Run some arbitrary bytecode
-    pub fn run(&mut self, code: &[u16]) -> Result<(), BytecodeError> {
+    pub fn run(&mut self, code: &[u16]) -> Result<(), BytecodeError<'a>> {
         let codelen = code.len();
         let mut n: usize = 0;
 
@@ -50,7 +50,7 @@ impl Engine {
         Ok(())
     }
 
-    fn op_system(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError> {
+    fn op_system(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError<'a>> {
         match value {
             bytecode::sys::NOP => return Ok(n+1),
             bytecode::sys::PRINT_STACK => {
@@ -80,7 +80,7 @@ impl Engine {
         Ok(n+1)
     }
 
-    fn op_stack(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError> {
+    fn op_stack(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError<'a>> {
         match value {
             //bytecode::stack::CONST_0 => self.stack.push(0),
             bytecode::stack::CONST_0 => pushstack!(self, code[n], "const.0", 0),
@@ -153,7 +153,7 @@ impl Engine {
         Ok(n + 1)
     }
 
-    fn op_math(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError> {
+    fn op_math(&mut self, n: usize, code: &[u16], value: u8) -> Result<usize, BytecodeError<'a>> {
         match value {
             bytecode::math::ADD => {
                 let (v1, v2) = popstack2!(self, code[n], "add");

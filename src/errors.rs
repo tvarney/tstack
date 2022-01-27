@@ -2,12 +2,12 @@
 
 /// Information about the faulting instruction
 #[derive(Debug, Clone)]
-pub struct Instruction {
+pub struct Instruction<'a> {
     code: u16,
-    name: &'static str,
+    name: &'a str,
 }
 
-impl std::fmt::Display for Instruction {
+impl<'a> std::fmt::Display for Instruction<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{} ({:#06x})", self.name, self.code)
     }
@@ -15,8 +15,8 @@ impl std::fmt::Display for Instruction {
 
 /// Information about a number of required values
 #[derive(Debug, Clone)]
-pub struct RequiredValues {
-    instruction: Instruction,
+pub struct RequiredValues<'a> {
+    instruction: Instruction<'a>,
     required: u64,
 }
 
@@ -32,14 +32,14 @@ pub struct RequiredValues {
 /// Currently there is no way for running code to handle faults, though it is
 /// planned to add a signals like interface for registering fault handlers.
 #[derive(Debug, Clone)]
-pub enum BytecodeError {
-    StackOverflow(Instruction),
-    StackUnderflow(RequiredValues),
-    CodeData(RequiredValues),
+pub enum BytecodeError<'a> {
+    StackOverflow(Instruction<'a>),
+    StackUnderflow(RequiredValues<'a>),
+    CodeData(RequiredValues<'a>),
     BadOpcode(u16),
 }
 
-impl std::fmt::Display for BytecodeError {
+impl<'a> std::fmt::Display for BytecodeError<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             BytecodeError::StackOverflow(i) => {
@@ -58,15 +58,15 @@ impl std::fmt::Display for BytecodeError {
     }
 }
 
-impl BytecodeError {
-    pub fn stack_overflow(opcode: u16, name: &'static str) -> BytecodeError {
+impl<'a> BytecodeError<'a> {
+    pub fn stack_overflow(opcode: u16, name: &'a str) -> BytecodeError<'a> {
         BytecodeError::StackOverflow(Instruction{
             code: opcode,
             name: name,
         })
     }
 
-    pub fn stack_underflow(opcode: u16, name: &'static str, req: u64) -> BytecodeError {
+    pub fn stack_underflow(opcode: u16, name: &'a str, req: u64) -> BytecodeError<'a> {
         BytecodeError::StackUnderflow(RequiredValues{
             instruction: Instruction {
                 code: opcode,
@@ -76,7 +76,7 @@ impl BytecodeError {
         })
     }
 
-    pub fn code_data(opcode: u16, name: &'static str, req: u64) -> BytecodeError {
+    pub fn code_data(opcode: u16, name: &'a str, req: u64) -> BytecodeError<'a> {
         BytecodeError::CodeData(RequiredValues{
             instruction: Instruction {
                 code: opcode,
