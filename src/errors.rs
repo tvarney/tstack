@@ -1,22 +1,20 @@
 //! Definitions of error types the engine can return
 
-/// Information about the faulting instruction
 #[derive(Debug, Clone)]
-pub struct Instruction<'a> {
-    code: u16,
-    name: &'a str,
+pub struct Instruction {
+    pub code: u16,
 }
 
-impl<'a> std::fmt::Display for Instruction<'a> {
+impl std::fmt::Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{} ({:#06x})", self.name, self.code)
+        write!(f, "{:#06x}", self.code)
     }
 }
 
 /// Information about a number of required values
 #[derive(Debug, Clone)]
-pub struct RequiredValues<'a> {
-    instruction: Instruction<'a>,
+pub struct RequiredValues {
+    instruction: Instruction,
     required: u64,
 }
 
@@ -32,56 +30,63 @@ pub struct RequiredValues<'a> {
 /// Currently there is no way for running code to handle faults, though it is
 /// planned to add a signals like interface for registering fault handlers.
 #[derive(Debug, Clone)]
-pub enum BytecodeError<'a> {
-    StackOverflow(Instruction<'a>),
-    StackUnderflow(RequiredValues<'a>),
-    CodeData(RequiredValues<'a>),
+pub enum BytecodeError {
     BadOpcode(u16),
+    CodeData(RequiredValues),
+    InvalidAddress(usize),
+    InvalidModule(u32),
+    InvalidSymbol(u32),
+    StackOverflow(Instruction),
+    StackUnderflow(RequiredValues),
 }
 
-impl<'a> std::fmt::Display for BytecodeError<'a> {
+impl std::fmt::Display for BytecodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
+            BytecodeError::BadOpcode(v) => {
+                write!(f, "invalid opcode {:#06x}", v)
+            },
+            BytecodeError::CodeData(r) => {
+                write!(f, "insufficient data bytes for {}; {} bytes required", r.instruction, r.required)
+            },
+            BytecodeError::InvalidAddress(addr) => {
+                write!(f, "invalid address {}", addr)
+            },
+            BytecodeError::InvalidModule(id) => {
+                write!(f, "invalid module ID {}", id)
+            },
+            BytecodeError::InvalidSymbol(id) => {
+                write!(f, "invalid symbol ID {}", id)
+            },
             BytecodeError::StackOverflow(i) => {
                 write!(f, "stack size exceeded maximum allowed on opcode {}", i)
             },
             BytecodeError::StackUnderflow(r) => {
                 write!(f, "too few operands for {}; {} values required", r.instruction, r.required)
-            },
-            BytecodeError::CodeData(r) => {
-                write!(f, "insufficient data bytes for {}; {} bytes required", r.instruction, r.required)
-            },
-            BytecodeError::BadOpcode(v) => {
-                write!(f, "invalid opcode {:#06x}", v)
             }
         }
     }
 }
 
-impl<'a> BytecodeError<'a> {
-    pub fn stack_overflow(opcode: u16, name: &'a str) -> BytecodeError<'a> {
+impl BytecodeError {
+    pub fn stack_overflow(opcode: u16) -> BytecodeError {
         BytecodeError::StackOverflow(Instruction{
             code: opcode,
-            name: name,
         })
     }
 
-    pub fn stack_underflow(opcode: u16, name: &'a str, req: u64) -> BytecodeError<'a> {
+    pub fn stack_underflow(opcode: u16, req: u64) -> BytecodeError {
         BytecodeError::StackUnderflow(RequiredValues{
             instruction: Instruction {
                 code: opcode,
-                name: name,
             },
             required: req,
         })
     }
 
-    pub fn code_data(opcode: u16, name: &'a str, req: u64) -> BytecodeError<'a> {
+    pub fn code_data(opcode: u16, req: u64) -> BytecodeError {
         BytecodeError::CodeData(RequiredValues{
-            instruction: Instruction {
-                code: opcode,
-                name: name,
-            },
+            instruction: Instruction{code: opcode},
             required: req,
         })
     }
@@ -112,5 +117,24 @@ impl<'a> BytecodeError<'a> {
             return true;
         }
         false
+    }
+}
+
+#[derive(Clone, Debug)]
+pub enum ModuleError {
+    InvalidName(String),
+    NameCollision(String),
+}
+
+impl std::fmt::Display for ModuleError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ModuleError::InvalidName(name) => {
+                write!(f, "invalid module name {}", name)
+            },
+            ModuleError::NameCollision(name) => {
+                write!(f, "module {} already defined", name)
+            }
+        }
     }
 }

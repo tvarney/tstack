@@ -1,6 +1,9 @@
 
 use tstack;
 
+use std::collections::HashMap;
+use std::rc::Rc;
+
 macro_rules! stack {
     ($($x:expr),*) => {{
         let v: Vec<u64> = vec![$($x),*];
@@ -10,8 +13,20 @@ macro_rules! stack {
 
 fn test_stack(bytecode: &[u16], expected: Vec<u64>) {
     let mut engine = tstack::Engine::new();
-    let result = engine.run(bytecode);
-    if let Err(e) = result {
+    let r = engine.add_module(Rc::new(tstack::module::Module{
+        name: String::from("testmain"),
+        strings: vec![String::from("main")],
+        local_symbols: vec![
+            tstack::module::LocalSymbol{name_id: 0, code_offset: 0},
+        ],
+        external_symbols: vec![],
+        bytecode: bytecode.to_vec(),
+        symbol_lookup: HashMap::new(),
+    }));
+    if let Err(e) = r {
+        assert!(false, "Unexpected error adding test module: {}", e);
+    }
+    if let Err(e) = engine.run(0, 0) {
         assert!(false, "Unexpected error: {}", e);
     }
     assert_eq!(engine.stack, expected);
@@ -22,8 +37,20 @@ fn test_fail(init: Option<fn(&mut tstack::Engine)>, errcheck: Option<fn(tstack::
     if let Some(initfn) = init {
         initfn(&mut engine);
     }
-    let result = engine.run(bytecode);
-    if let Err(e) = result {
+    let r = engine.add_module(Rc::new(tstack::module::Module{
+        name: String::from("testmain"),
+        strings: vec![String::from("main")],
+        local_symbols: vec![
+            tstack::module::LocalSymbol{name_id: 0, code_offset: 0},
+        ],
+        external_symbols: vec![],
+        bytecode: bytecode.to_vec(),
+        symbol_lookup: HashMap::new(),
+    }));
+    if let Err(e) = r {
+        assert!(false, "Unexpected error adding test module: {}", e);
+    }
+    if let Err(e) = engine.run(0, 0) {
         if let Some(errfn) = errcheck {
             assert!(errfn(e), "incorrect error");
         }
