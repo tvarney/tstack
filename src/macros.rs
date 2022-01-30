@@ -1,10 +1,9 @@
-
 macro_rules! checkstack {
     ($engine:expr, $opcode:expr, $count:expr) => {
         if (($engine.maxstack - $engine.stack.len()) as u64) < $count {
             return Err(BytecodeError::stack_overflow($opcode));
         }
-    }
+    };
 }
 
 macro_rules! pushstack {

@@ -36,7 +36,7 @@ pub const DATA_SHIFT: u16 = 0;
 macro_rules! inst_stack {
     ($instr:ident) => {
         ((($crate::bytecode::groups::STACK as u16) << 8) | ($crate::bytecode::stack::$instr as u16))
-    }
+    };
 }
 
 /// Generate a system instruction
@@ -53,7 +53,7 @@ macro_rules! inst_stack {
 macro_rules! inst_sys {
     ($instr:ident) => {
         ((($crate::bytecode::groups::SYSTEM as u16) << 8) | ($crate::bytecode::sys::$instr as u16))
-    }
+    };
 }
 
 /// Generate a math instruction
@@ -70,7 +70,7 @@ macro_rules! inst_sys {
 macro_rules! inst_math {
     ($instr:ident) => {
         ((($crate::bytecode::groups::MATH as u16) << 8) | ($crate::bytecode::math::$instr as u16))
-    }
+    };
 }
 
 /// Generate a jump instruction
@@ -82,22 +82,18 @@ macro_rules! inst_math {
 #[macro_export]
 macro_rules! inst_jump {
     ($src:ident, $mode:ident) => {
-        (
-            (($crate::bytecode::groups::JUMP as u16) << 8)
+        ((($crate::bytecode::groups::JUMP as u16) << 8)
             | ($crate::bytecode::jump::$src as u16)
             | ($crate::bytecode::jump::$mode as u16)
-            | ($crate::bytecode::jump::CONDITIONAL_FALSE as u16)
-        )
+            | ($crate::bytecode::jump::CONDITIONAL_FALSE as u16))
     };
     ($src:ident, $mode:ident, $condition:ident) => {
-        (
-            (($crate::bytecode::groups::JUMP as u16) << 8)
+        ((($crate::bytecode::groups::JUMP as u16) << 8)
             | ($crate::bytecode::jump::$src as u16)
             | ($crate::bytecode::jump::$mode as u16)
             | ($crate::bytecode::jump::CONDITIONAL_TRUE as u16)
-            | ($crate::bytecode::jump::$condition as u16)
-        )
-    }
+            | ($crate::bytecode::jump::$condition as u16))
+    };
 }
 
 /// Groups broadly correspond to a type of instruction.
@@ -136,6 +132,7 @@ pub mod groups {
 ///| PRINT_F32   |`0x04`|      |`[a] -> []`| Debug print the topmost stack value as f32 (truncating)
 ///| PRINT_F64   |`0x05`|      |`[a] -> []`| Debug print the topmost stack value as f64
 ///| FAULT       |`0xFF`|      |           | Force a fault
+#[rustfmt::skip]
 pub mod sys {
     pub const NOP:         u8 = 0x00;
     pub const HALT:        u8 = 0x01;
@@ -229,6 +226,7 @@ pub mod sys {
 ///     result in a local storage size `n` where `$n > 255` or `$n < 0`, the
 ///     machine will fault. E.g. `reserve.c 0x7FFF` will always fault, as it
 ///     attempts to reserve ~32,000 locals.
+#[rustfmt::skip]
 pub mod stack {
     pub const CONST_0:    u8 = 0x00;
     pub const CONST_1:    u8 = 0x01;
@@ -332,6 +330,7 @@ pub mod stack {
 ///     | (jump::TYPE_POS as u16)
 /// );
 /// ```
+#[rustfmt::skip]
 pub mod jump {
     /// Mask for the source of a jump
     ///
@@ -477,6 +476,7 @@ pub mod jump {
 ///| DIFF      |`0xFD`|         |`[a1...a$n,n] -> [a$n-...-a1]`   | Repeated subtraction of top `$n` values on the stack
 ///| SUM_C     |`0xFE`|`c:u16`  |`[a1...a$c]   -> [a$c+...+a1]`   | Sum top `$c` values on the stack
 ///| SUM       |`0xFF`|         |`[a1...a$n,n] -> [a$n+...+a1]`   | Sum top `$n` values on the stack
+#[rustfmt::skip]
 pub mod math {
     pub const ADD:       u8 = 0x00;
     pub const ADD_C:     u8 = 0x01;

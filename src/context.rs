@@ -2,8 +2,8 @@
 
 use std::rc::Rc;
 
-use crate::module::Module;
 use crate::errors::BytecodeError;
+use crate::module::Module;
 
 /// An execution context of the virtual machine
 ///
@@ -26,11 +26,7 @@ impl Context {
             return Err(BytecodeError::InvalidAddress(offset));
         }
         let current = (*module).bytecode[offset];
-        Ok(Context{
-            module: module,
-            offset: offset,
-            current: current,
-        })
+        Ok(Context { module: module, offset: offset, current: current })
     }
 
     /// Get the currently executing opcode
@@ -43,7 +39,7 @@ impl Context {
     #[inline]
     pub fn next(&mut self) -> Option<u16> {
         if !self.has_next() {
-            return None
+            return None;
         }
         let v = (*(self.module)).bytecode[self.offset];
         self.offset += 1;
@@ -75,7 +71,7 @@ impl Context {
             return Err(BytecodeError::code_data(self.current, 2));
         }
         let v1 = (*(self.module)).bytecode[self.offset];
-        let v2 = (*(self.module)).bytecode[self.offset+1];
+        let v2 = (*(self.module)).bytecode[self.offset + 1];
         self.offset += 2;
         Ok((v1, v2))
     }

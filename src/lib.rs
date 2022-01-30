@@ -1,18 +1,17 @@
-
 #[macro_use]
 mod macros;
 
 pub mod bytecode;
 pub mod context;
-pub mod module;
 pub mod errors;
+pub mod module;
 
 use std::collections::HashMap;
 use std::num::Wrapping;
 use std::rc::Rc;
 
-use context::Context;
 use self::errors::{BytecodeError, ModuleError};
+use context::Context;
 use module::Module;
 
 /// The virtual machine engine
@@ -40,7 +39,8 @@ impl Engine {
             maxstack: 0x8FFF,
             modules: Vec::new(),
             module_lookup: HashMap::new(),
-            context: Context::new(Rc::new(Module{
+            context: Context::new(
+                Rc::new(Module {
                     name: String::from(""),
                     strings: vec![],
                     data: vec![],
@@ -48,8 +48,10 @@ impl Engine {
                     external_symbols: vec![],
                     bytecode: vec![inst_sys!(NOP)],
                     symbol_lookup: HashMap::new(),
-                }), 0,
-            ).unwrap(),
+                }),
+                0,
+            )
+            .unwrap(),
         }
     }
 
@@ -96,8 +98,8 @@ impl Engine {
             println!("Opcode: {:#06x} ({:#04x}|{:#04x})", opcode, group, value);
             match group {
                 bytecode::groups::SYSTEM => self.op_system(opcode, value)?,
-                bytecode::groups::STACK  => self.op_stack(opcode, value)?,
-                bytecode::groups::MATH   => self.op_math(opcode, value)?,
+                bytecode::groups::STACK => self.op_stack(opcode, value)?,
+                bytecode::groups::MATH => self.op_math(opcode, value)?,
                 _ => {
                     // Unimplemented
                     return Err(BytecodeError::BadOpcode(opcode));
@@ -113,23 +115,23 @@ impl Engine {
             bytecode::sys::NOP => (),
             bytecode::sys::PRINT_STACK => {
                 println!("Stack: {:?}", self.stack);
-            },
+            }
             bytecode::sys::PRINT_U64 => {
                 let value = popstack1!(self, opcode);
                 println!("PRINT: {}", value);
-            },
+            }
             bytecode::sys::PRINT_I64 => {
                 let value = popstack1!(self, opcode);
                 println!("PRINT: {}", value as i64);
-            },
+            }
             bytecode::sys::PRINT_F32 => {
                 let value = popstack1!(self, opcode);
                 println!("PRINT: {}", f32::from_bits(value as u32));
-            },
+            }
             bytecode::sys::PRINT_F64 => {
                 let value = popstack1!(self, opcode);
                 println!("PRINT: {}", f64::from_bits(value));
-            },
+            }
             _ => {
                 // Unimplemented
                 return Err(BytecodeError::BadOpcode(opcode));
@@ -155,8 +157,12 @@ impl Engine {
             bytecode::stack::CONST_U16 => pushstack!(self, opcode, self.context.cval_u16()?),
             bytecode::stack::CONST_U32 => pushstack!(self, opcode, self.context.cval_u32()?),
             bytecode::stack::CONST_U64 => pushstack!(self, opcode, self.context.cval_u64()?),
-            bytecode::stack::CONST_I16 => pushstack!(self, opcode, ((self.context.cval_u16()? as i16) as i64)),
-            bytecode::stack::CONST_I32 => pushstack!(self, opcode, ((self.context.cval_u32()? as i32) as i64)),
+            bytecode::stack::CONST_I16 => {
+                pushstack!(self, opcode, ((self.context.cval_u16()? as i16) as i64))
+            }
+            bytecode::stack::CONST_I32 => {
+                pushstack!(self, opcode, ((self.context.cval_u32()? as i32) as i64))
+            }
             bytecode::stack::DUPE => {
                 let num = popstack1!(self, opcode);
                 checkstack!(self, opcode, num);
@@ -167,27 +173,27 @@ impl Engine {
                 // checks
                 let base = self.stack.len() - (num as usize);
                 for i in 0..(num as usize) {
-                    self.stack.push(self.stack[base+i]);
+                    self.stack.push(self.stack[base + i]);
                 }
-            },
+            }
             bytecode::stack::DUPE_1 => {
                 checkstack!(self, opcode, 1);
                 if self.stack.len() < 1 {
                     return Err(BytecodeError::stack_underflow(opcode, 1));
                 }
-                self.stack.push(self.stack[self.stack.len()-1]);
-            },
+                self.stack.push(self.stack[self.stack.len() - 1]);
+            }
             bytecode::stack::DUPE_C => {
                 let num = self.context.cval_u16()? as usize;
                 checkstack!(self, opcode, num as u64);
                 if self.stack.len() < num {
-                    return Err(BytecodeError::stack_underflow(opcode, num as u64))
+                    return Err(BytecodeError::stack_underflow(opcode, num as u64));
                 }
                 let base = self.stack.len() - num;
                 for i in 0..num {
-                    self.stack.push(self.stack[base+i]);
+                    self.stack.push(self.stack[base + i]);
                 }
-            },
+            }
             _ => {
                 return Err(BytecodeError::BadOpcode(opcode));
             }
@@ -200,34 +206,34 @@ impl Engine {
             bytecode::math::ADD => {
                 let (v1, v2) = popstack2!(self, opcode);
                 self.stack.push((Wrapping(v1) + Wrapping(v2)).0);
-            },
+            }
             bytecode::math::ADD_C => {
                 let c = self.context.cval_u16()? as u64;
                 let v = popstack1!(self, opcode);
                 self.stack.push((Wrapping(c) + Wrapping(v)).0);
-            },
+            }
             bytecode::math::SUB => {
                 let (v1, v2) = popstack2!(self, opcode);
                 self.stack.push((Wrapping(v1) - Wrapping(v2)).0);
-            },
+            }
             bytecode::math::SUB_C => {
                 let c = self.context.cval_u16()? as u64;
                 let v = popstack1!(self, opcode);
                 self.stack.push((Wrapping(v) - Wrapping(c)).0);
-            },
+            }
             bytecode::math::MUL => {
                 let (v1, v2) = popstack2!(self, opcode);
                 self.stack.push((Wrapping(v1) * Wrapping(v2)).0);
-            },
+            }
             bytecode::math::MUL_C => {
                 let c = self.context.cval_u16()? as u64;
                 let v = popstack1!(self, opcode);
                 self.stack.push((Wrapping(v) * Wrapping(c)).0);
-            },
+            }
             bytecode::math::DIV => {
                 let (v1, v2) = popstack2!(self, opcode);
                 self.stack.push((Wrapping(v1) / Wrapping(v2)).0);
-            },
+            }
             bytecode::math::DIV_C => {
                 let c = self.context.cval_u16()? as u64;
                 let v = popstack1!(self, opcode);

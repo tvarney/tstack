@@ -34,24 +34,32 @@ impl std::fmt::Display for BytecodeError {
         match self {
             BytecodeError::BadOpcode(v) => {
                 write!(f, "invalid opcode {:#06x}", v)
-            },
+            }
             BytecodeError::CodeData(r) => {
-                write!(f, "insufficient data bytes for {:#06x}; {} bytes required", r.instruction, r.required)
-            },
+                write!(
+                    f,
+                    "insufficient data bytes for {:#06x}; {} bytes required",
+                    r.instruction, r.required
+                )
+            }
             BytecodeError::InvalidAddress(addr) => {
                 write!(f, "invalid address {}", addr)
-            },
+            }
             BytecodeError::InvalidModule(id) => {
                 write!(f, "invalid module ID {}", id)
-            },
+            }
             BytecodeError::InvalidSymbol(id) => {
                 write!(f, "invalid symbol ID {}", id)
-            },
+            }
             BytecodeError::StackOverflow(i) => {
                 write!(f, "stack size exceeded maximum allowed on opcode {}", i)
-            },
+            }
             BytecodeError::StackUnderflow(r) => {
-                write!(f, "too few operands for {:#06x}; {} values required", r.instruction, r.required)
+                write!(
+                    f,
+                    "too few operands for {:#06x}; {} values required",
+                    r.instruction, r.required
+                )
             }
         }
     }
@@ -65,18 +73,12 @@ impl BytecodeError {
 
     /// Create a new BytecodeError::StackUnderflow error
     pub fn stack_underflow(opcode: u16, req: u64) -> BytecodeError {
-        BytecodeError::StackUnderflow(RequiredValues{
-            instruction: opcode,
-            required: req,
-        })
+        BytecodeError::StackUnderflow(RequiredValues { instruction: opcode, required: req })
     }
 
     /// Create a new BytecodeError::CodeData error
     pub fn code_data(opcode: u16, req: u64) -> BytecodeError {
-        BytecodeError::CodeData(RequiredValues{
-            instruction: opcode,
-            required: req,
-        })
+        BytecodeError::CodeData(RequiredValues { instruction: opcode, required: req })
     }
 
     /// Check if the BytecodeError is a BytecodeError::StackOverflow instance
@@ -124,7 +126,7 @@ impl std::fmt::Display for ModuleError {
         match self {
             ModuleError::InvalidName(name) => {
                 write!(f, "invalid module name {}", name)
-            },
+            }
             ModuleError::NameCollision(name) => {
                 write!(f, "module {} already defined", name)
             }
