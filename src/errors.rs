@@ -1,20 +1,9 @@
 //! Definitions of error types the engine can return
 
-#[derive(Debug, Clone)]
-pub struct Instruction {
-    pub code: u16,
-}
-
-impl std::fmt::Display for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:#06x}", self.code)
-    }
-}
-
 /// Information about a number of required values
 #[derive(Debug, Clone)]
 pub struct RequiredValues {
-    instruction: Instruction,
+    instruction: u16,
     required: u64,
 }
 
@@ -36,7 +25,7 @@ pub enum BytecodeError {
     InvalidAddress(usize),
     InvalidModule(u32),
     InvalidSymbol(u32),
-    StackOverflow(Instruction),
+    StackOverflow(u16),
     StackUnderflow(RequiredValues),
 }
 
@@ -47,7 +36,7 @@ impl std::fmt::Display for BytecodeError {
                 write!(f, "invalid opcode {:#06x}", v)
             },
             BytecodeError::CodeData(r) => {
-                write!(f, "insufficient data bytes for {}; {} bytes required", r.instruction, r.required)
+                write!(f, "insufficient data bytes for {:#06x}; {} bytes required", r.instruction, r.required)
             },
             BytecodeError::InvalidAddress(addr) => {
                 write!(f, "invalid address {}", addr)
@@ -62,35 +51,35 @@ impl std::fmt::Display for BytecodeError {
                 write!(f, "stack size exceeded maximum allowed on opcode {}", i)
             },
             BytecodeError::StackUnderflow(r) => {
-                write!(f, "too few operands for {}; {} values required", r.instruction, r.required)
+                write!(f, "too few operands for {:#06x}; {} values required", r.instruction, r.required)
             }
         }
     }
 }
 
 impl BytecodeError {
+    /// Create a new BytecodeError::StackOverflow error
     pub fn stack_overflow(opcode: u16) -> BytecodeError {
-        BytecodeError::StackOverflow(Instruction{
-            code: opcode,
-        })
+        BytecodeError::StackOverflow(opcode)
     }
 
+    /// Create a new BytecodeError::StackUnderflow error
     pub fn stack_underflow(opcode: u16, req: u64) -> BytecodeError {
         BytecodeError::StackUnderflow(RequiredValues{
-            instruction: Instruction {
-                code: opcode,
-            },
+            instruction: opcode,
             required: req,
         })
     }
 
+    /// Create a new BytecodeError::CodeData error
     pub fn code_data(opcode: u16, req: u64) -> BytecodeError {
         BytecodeError::CodeData(RequiredValues{
-            instruction: Instruction{code: opcode},
+            instruction: opcode,
             required: req,
         })
     }
 
+    /// Check if the BytecodeError is a BytecodeError::StackOverflow instance
     pub fn is_stack_overflow(&self) -> bool {
         if let BytecodeError::StackOverflow(_) = self {
             return true;
@@ -98,6 +87,7 @@ impl BytecodeError {
         false
     }
 
+    /// Check if the BytecodeError is a BytecodeError::StackUnderflow instance
     pub fn is_stack_underflow(&self) -> bool {
         if let BytecodeError::StackUnderflow(_) = self {
             return true;
@@ -105,6 +95,7 @@ impl BytecodeError {
         false
     }
 
+    /// Check if the BytecodeError is a BytecodeError::CodeData instance
     pub fn is_code_data(&self) -> bool {
         if let BytecodeError::CodeData(_) = self {
             return true;
@@ -112,6 +103,7 @@ impl BytecodeError {
         false
     }
 
+    /// Check if the BytecodeError is a BytecodeError::BadOpcode instance
     pub fn is_bad_opcode(&self) -> bool {
         if let BytecodeError::BadOpcode(_) = self {
             return true;
@@ -120,6 +112,7 @@ impl BytecodeError {
     }
 }
 
+/// A compound error type for errors when defining modules
 #[derive(Clone, Debug)]
 pub enum ModuleError {
     InvalidName(String),

@@ -9,6 +9,7 @@ fn main() {
     let r = engine.add_module(Rc::new(tstack::module::Module{
         name: String::from("main"),
         strings: vec![String::from("main")],
+        data: vec![],
         local_symbols: vec![
             tstack::module::LocalSymbol{name_id: 0, code_offset: 0},
         ],

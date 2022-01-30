@@ -1,8 +1,18 @@
+//! Execution context definitions
+
 use std::rc::Rc;
 
 use crate::module::Module;
 use crate::errors::BytecodeError;
 
+/// An execution context of the virtual machine
+///
+/// The Context struct contains an 'execution context' within the virtual
+/// machine, holding the currently executing module (which contains the
+/// bytecode) and an instruction pointer into it.
+///
+/// When combined with a stack, this allows for function calls both within
+/// and between modules.
 pub struct Context {
     module: Rc<Module>,
     offset: usize,

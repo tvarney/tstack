@@ -43,6 +43,7 @@ impl Engine {
             context: Context::new(Rc::new(Module{
                     name: String::from(""),
                     strings: vec![],
+                    data: vec![],
                     local_symbols: vec![],
                     external_symbols: vec![],
                     bytecode: vec![inst_sys!(NOP)],
@@ -52,14 +53,21 @@ impl Engine {
         }
     }
 
-    pub fn add_module(&mut self, module: Rc<Module>) -> Result<(), ModuleError> {
+    /// Add the given module to the engine
+    ///
+    /// This adds the given module to the engine, registering the name of the
+    /// module to the next available ID.
+    pub fn add_module(&mut self, module: Rc<Module>) -> Result<u32, ModuleError> {
         if let Some(_) = self.module_lookup.get(&module.name) {
             return Err(ModuleError::NameCollision(module.name.clone()));
         }
 
+        let module_id = self.modules.len();
+
+        self.module_lookup.insert(module.name.clone(), module_id as u32);
         self.modules.push(Rc::clone(&module));
 
-        Ok(())
+        Ok(module_id as u32)
     }
 
     fn get_context(&self, module_id: u32, symbol_id: u32) -> Result<Context, BytecodeError> {
@@ -74,6 +82,10 @@ impl Engine {
         Ok(Context::new(Rc::clone(module), symbol.code_offset as usize)?)
     }
 
+    /// Run the bytecode for the given module and symbol IDs
+    ///
+    /// This will execute the symbol in the module corresponding to the given
+    /// IDs.
     pub fn run(&mut self, module_id: u32, symbol_id: u32) -> Result<(), BytecodeError> {
         self.context = self.get_context(module_id, symbol_id)?;
 
